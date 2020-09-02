@@ -20,7 +20,7 @@ def call(Map config) {
   def buildVersion = config.buildNumber
   def modulePath = "${config.baseDir}/modules/${config.subPath}"
 
-  container('play26-builder') {
+  container('play26-sbt1-builder') {
 
     stage('Build Details') {
       echo "Project:   ${config.project}"
@@ -54,7 +54,7 @@ def call(Map config) {
   }
 
 //  if(config.stage == 'dist') { 
-    container('play26-builder') {
+    container('play26-sbt1-builder') {
       stage('Inject configuration') {
         // TODO: Allow ${SETTINGS_CONTEXT} to be overriden
           // From https://stash.agiledigital.com.au/projects/MCP/repos/docker-builder/browse/builders/play2-multi-build/build.sh
