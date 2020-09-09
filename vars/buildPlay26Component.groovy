@@ -83,16 +83,22 @@ def call(Map config) {
       }
     }
 
-    stage('Archive to Jenkins') {
+    stage('Archive and publish to S3') {
       def tarName = "${fullComponentName}-${buildVersion}.tar.gz"
+      
       // Re-compress dist zip file as tar gzip without top level folder
       sh "unzip ${modulePath}/target/universal/${fullComponentName}-${buildVersion}.zip"
+
       // Remove dist .bat, and rename main executable to have a generic name
       sh "rm \"${fullComponentName}-${buildVersion}/bin/${fullComponentName}.bat\""
       sh "mv \"${fullComponentName}-${buildVersion}/bin/${fullComponentName}\" \"${fullComponentName}-${buildVersion}/bin/dist\""
       sh "tar -czvf \"${tarName}\" -C \"${fullComponentName}-${buildVersion}\" ."
-      archiveArtifacts tarName
+      
+      s3Upload(
+        bucket: "${config.bucket}",
+        path: "${config.project}/${config.buildNumber}/",
+        file: tarName
+      )
     }
-  //}
-  
+  // }
 }
