@@ -99,7 +99,7 @@ def call(Map config) {
       withAWS(credentials: "${config.awsCredentialId}") {
         s3Upload(
           bucket: "${config.bucket}",
-          path: "/${config.project}/${config.buildNumber}/${config.component}",
+          path: "${config.project}/${config.buildNumber}/${config.component}",
           file: tarName
         )
       }
