@@ -28,6 +28,7 @@ def call(Map config) {
       echo "BuildNumber: ${config.buildNumber}"
       echo "Module: ${config.module}"
       echo "S3 Bucket: ${config.bucket}"
+      echo "AWS Cred ID: ${config.awsCredentialId}"
     }
 
     stage('Prepare environment') {
@@ -95,11 +96,13 @@ def call(Map config) {
       sh "mv \"${fullComponentName}-${buildVersion}/bin/${fullComponentName}\" \"${fullComponentName}-${buildVersion}/bin/dist\""
       sh "tar -czvf \"${tarName}\" -C \"${fullComponentName}-${buildVersion}\" ."
       
-      s3Upload(
-        bucket: "${config.bucket}",
-        path: "",
-        file: tarName
-      )
+      withAWS(credentials: "${config.awsCredentialId}") {
+        s3Upload(
+          bucket: "${config.bucket}",
+          path: "",
+          file: tarName
+        )
+      }
     }
   // }
 }
