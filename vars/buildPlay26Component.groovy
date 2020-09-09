@@ -27,6 +27,7 @@ def call(Map config) {
       echo "Component: ${config.component}"
       echo "BuildNumber: ${config.buildNumber}"
       echo "Module: ${config.module}"
+      echo "S3 Bucket: ${config.bucket}"
     }
 
     stage('Prepare environment') {
@@ -94,8 +95,6 @@ def call(Map config) {
       sh "mv \"${fullComponentName}-${buildVersion}/bin/${fullComponentName}\" \"${fullComponentName}-${buildVersion}/bin/dist\""
       sh "tar -czvf \"${tarName}\" -C \"${fullComponentName}-${buildVersion}\" ."
       
-      sh "echo ${config.bucket} ${${config.project}/${config.buildNumber}/} ${tarName}"
-
       s3Upload(
         bucket: "${config.bucket}",
         path: "${config.project}/${config.buildNumber}/",
