@@ -97,7 +97,7 @@ def call(Map config) {
       
       s3Upload(
         bucket: "${config.bucket}",
-        path: "${config.project}/${config.buildNumber}/",
+        path: "",
         file: tarName
       )
     }
