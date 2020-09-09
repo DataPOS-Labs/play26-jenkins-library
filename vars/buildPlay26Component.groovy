@@ -96,9 +96,13 @@ def call(Map config) {
       sh "tar -czvf \"${tarName}\" -C \"${fullComponentName}-${buildVersion}\" ."
       
       s3Upload(
-        bucket: "${config.bucket}",
-        path: "${config.project}/${config.buildNumber}/",
-        file: tarName
+        entries: [
+          {
+            bucket: "${config.bucket}",
+            path: "${config.project}/${config.buildNumber}/",
+            file: tarName
+          }
+        ]
       )
     }
   // }
