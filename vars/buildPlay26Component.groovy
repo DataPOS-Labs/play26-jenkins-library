@@ -1,10 +1,3 @@
-/*
- * Toolform-compatible Jenkins 2 Pipeline build step for Play Framework 2.6 based components built using SBT
- */
-// baseDir: "server",
-// project: "source-ip",
-// component: "public",
-// buildNumber: buildNumber
 
 def call(Map config) {
   final sbt = { cmd ->
