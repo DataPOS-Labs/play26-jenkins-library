@@ -48,54 +48,46 @@ def call(Map config) {
     }
   }
 
-//  if(config.stage == 'dist') { 
-    container('play26-sbt1-builder') {
-      stage('Inject configuration') {
-        // TODO: Allow ${SETTINGS_CONTEXT} to be overriden
-          // From https://stash.agiledigital.com.au/projects/MCP/repos/docker-builder/browse/builders/play2-multi-build/build.sh
-        sh """
-        |# Insert the project.conf, environment.conf, etc into the deployable.
-        |cp *.conf "${modulePath}/conf"
-        |
-        |# Create the conf file that ties the application.conf and environment.conf together.
-        |echo 'include "application.conf"' > "${modulePath}/conf/combined.conf"
-        |echo 'include "environment.conf"' >> "${modulePath}/conf/combined.conf"
-        |echo 'include "topology.conf"' >> "${modulePath}/conf/combined.conf"
-        |
-        |# Allow the application.context variable to be overridden.
-        |echo 'play.http.context=/' >> "${modulePath}/conf/combined.conf"
-        |echo 'play.http.context=\${?APPLICATION_CONTEXT}' >> "${modulePath}/conf/combined.conf"
-        |
-        |# Allow cryto to be changed
-        |echo 'play.crypto.secret=\${?APPLICATION_SECRET}' >> "${modulePath}/conf/combined.conf"
-        |
-        |cat "${modulePath}/conf/combined.conf"
-        |
-        |""".stripMargin()
-      }
-      stage('Package') {
-        sbt ";project ${config.get('module', config.component)}; set name := \"${fullComponentName}\"; set version := \"${buildVersion}\"; dist"
-      }
+  container('play26-sbt1-builder') {
+    stage('Inject configuration') {
+      // TODO: Allow ${SETTINGS_CONTEXT} to be overriden
+        // From https://stash.agiledigital.com.au/projects/MCP/repos/docker-builder/browse/builders/play2-multi-build/build.sh
+      sh """
+      |# Insert the project.conf, environment.conf, etc into the deployable.
+      |cp *.conf "${modulePath}/conf"
+      |
+      |# Create the conf file that ties the application.conf and environment.conf together.
+      |echo 'include "application.conf"' > "${modulePath}/conf/combined.conf"
+      |echo 'include "environment.conf"' >> "${modulePath}/conf/combined.conf"
+      |echo 'include "topology.conf"' >> "${modulePath}/conf/combined.conf"
+      |
+      |# Allow the application.context variable to be overridden.
+      |echo 'play.http.context=/' >> "${modulePath}/conf/combined.conf"
+      |echo 'play.http.context=\${?APPLICATION_CONTEXT}' >> "${modulePath}/conf/combined.conf"
+      |
+      |# Allow cryto to be changed
+      |echo 'play.crypto.secret=\${?APPLICATION_SECRET}' >> "${modulePath}/conf/combined.conf"
+      |
+      |cat "${modulePath}/conf/combined.conf"
+      |
+      |""".stripMargin()
     }
-
-    stage('Archive and publish to S3') {
-      def tarName = "${fullComponentName}-${buildVersion}.tar.gz"
-      
-      // Re-compress dist zip file as tar gzip without top level folder
-      sh "unzip ${modulePath}/target/universal/${fullComponentName}-${buildVersion}.zip"
-
-      // Remove dist .bat, and rename main executable to have a generic name
-      sh "rm \"${fullComponentName}-${buildVersion}/bin/${fullComponentName}.bat\""
-      sh "mv \"${fullComponentName}-${buildVersion}/bin/${fullComponentName}\" \"${fullComponentName}-${buildVersion}/bin/dist\""
-      sh "tar -czvf \"${tarName}\" -C \"${fullComponentName}-${buildVersion}\" ."
-      
-      withAWS(credentials: "${config.awsCredentialId}") {
-        s3Upload(
-          bucket: "${config.bucket}",
-          path: "${config.project}/${config.branchName}/${config.buildNumber}/${config.component}/",
-          file: tarName
-        )
-      }
+    stage('Package') {
+      sbt ";project ${config.get('module', config.component)}; set name := \"${fullComponentName}\"; set version := \"${buildVersion}\"; dist"
     }
-  // }
+  }
+
+  stage('Archive and publish to S3') {
+    def tarName = "${fullComponentName}-${buildVersion}.tar.gz"
+
+    // Re-compress dist zip file as tar gzip without top level folder
+    sh "unzip ${modulePath}/target/universal/${fullComponentName}-${buildVersion}.zip"
+
+    // Remove dist .bat, and rename main executable to have a generic name
+    sh "rm \"${fullComponentName}-${buildVersion}/bin/${fullComponentName}.bat\""
+    sh "mv \"${fullComponentName}-${buildVersion}/bin/${fullComponentName}\" \"${fullComponentName}-${buildVersion}/bin/dist\""
+    sh "tar -czvf \"${tarName}\" -C \"${fullComponentName}-${buildVersion}\" ."
+
+    archiveArtifacts artifacts: tarName, fingerprint: true
+  }
 }
