@@ -87,7 +87,9 @@ def call(Map config) {
     sh "rm \"${fullComponentName}-${buildVersion}/bin/${fullComponentName}.bat\""
     sh "mv \"${fullComponentName}-${buildVersion}/bin/${fullComponentName}\" \"${fullComponentName}-${buildVersion}/bin/dist\""
     sh "tar -czvf \"${tarName}\" -C \"${fullComponentName}-${buildVersion}\" ."
-
-    archiveArtifacts artifacts: tarName, fingerprint: true
+    sh "mkdir ${config.component}"
+    sh "mv ${tarName} ${config.component}"
+    
+    archiveArtifacts artifacts: "${config.component}/${tarName}", fingerprint: true
   }
 }
